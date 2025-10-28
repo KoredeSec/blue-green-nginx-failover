@@ -11,7 +11,7 @@ UPSTREAM_CONF=/etc/nginx/upstream.conf
 : "${GREEN_HOST:=app_green}"
 : "${GREEN_PORT:=3000}"
 
-# Create upstream with primary + backup (primary first)
+# Determine which pool is active
 if [ "${ACTIVE_POOL}" = "green" ]; then
   PRIMARY_HOST=${GREEN_HOST}
   PRIMARY_PORT=${GREEN_PORT}
@@ -24,17 +24,16 @@ else
   BACKUP_PORT=${GREEN_PORT}
 fi
 
+# Generate the upstream.conf dynamically
 cat > "${UPSTREAM_CONF}" <<EOF
 upstream backend_pool {
-    # primary - short max_fails and short fail_timeout to detect quickly
     server ${PRIMARY_HOST}:${PRIMARY_PORT} max_fails=1 fail_timeout=2s;
-    # backup server
     server ${BACKUP_HOST}:${BACKUP_PORT} backup;
 }
 EOF
 
-# Render final nginx.conf from template (template includes /etc/nginx/upstream.conf)
+# Render nginx.conf using envsubst
 envsubst < "${TEMPLATE}" > "${OUT}"
 
-# start nginx in foreground
+# Start nginx
 nginx -g 'daemon off;'
