@@ -4,16 +4,16 @@ services:
     container_name: app_blue
     restart: unless-stopped
     environment:
-      - PORT=${PORT}
-      - RELEASE_ID=${RELEASE_ID_BLUE}
-      - APP_POOL=blue
+      PORT: "${PORT}"
+      RELEASE_ID: "${RELEASE_ID_BLUE}"
+      APP_POOL: "blue"
     ports:
       - "${BLUE_HOST_PORT}:${PORT}"
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:${PORT}/healthz"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
       interval: 5s
       timeout: 2s
-      retries: 2
+      retries: 3
       start_period: 5s
 
   app_green:
@@ -21,16 +21,16 @@ services:
     container_name: app_green
     restart: unless-stopped
     environment:
-      - PORT=${PORT}
-      - RELEASE_ID=${RELEASE_ID_GREEN}
-      - APP_POOL=green
+      PORT: "${PORT}"
+      RELEASE_ID: "${RELEASE_ID_GREEN}"
+      APP_POOL: "green"
     ports:
       - "${GREEN_HOST_PORT}:${PORT}"
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:${PORT}/healthz"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
       interval: 5s
       timeout: 2s
-      retries: 2
+      retries: 3
       start_period: 5s
 
   nginx:
@@ -40,16 +40,18 @@ services:
     ports:
       - "${NGINX_PORT}:8080"
     volumes:
-      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
-      - ./nginx/upstream.conf:/etc/nginx/upstream.conf:rw
-      - ./nginx/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
+      - ./nginx/upstream.conf:/etc/nginx/upstream.conf
+      - ./nginx/docker-entrypoint.sh:/docker-entrypoint.sh
     environment:
-      - ACTIVE_POOL=${ACTIVE_POOL}
-      - BLUE_HOST=app_blue
-      - BLUE_PORT=${PORT}
-      - GREEN_HOST=app_green
-      - GREEN_PORT=${PORT}
+      ACTIVE_POOL: "${ACTIVE_POOL}"
+      BLUE_HOST: "app_blue"
+      BLUE_PORT: "${PORT}"
+      GREEN_HOST: "app_green"
+      GREEN_PORT: "${PORT}"
     depends_on:
-      - app_blue
-      - app_green
+      app_blue:
+        condition: service_healthy
+      app_green:
+        condition: service_healthy
     entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
