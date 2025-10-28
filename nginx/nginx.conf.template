@@ -11,9 +11,9 @@ http {
     default_type  application/octet-stream;
 
     # Timeout settings
-    proxy_connect_timeout 1s;
-    proxy_send_timeout 6s;
-    proxy_read_timeout 6s;
+    proxy_connect_timeout 2s;   # Slightly more forgiving
+    proxy_send_timeout 3s;
+    proxy_read_timeout 3s;       # Faster failover detection
 
     # Include the dynamic upstream config
     include /etc/nginx/upstream.conf;
@@ -23,7 +23,7 @@ http {
     proxy_pass_header X-Release-Id;
 
     server {
-        listen 8080;
+        listen 80; # Changed from 8080 to 80
 
         # Default reverse proxy location
         location / {
