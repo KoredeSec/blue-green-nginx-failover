@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  app_blue:
+    image: "${BLUE_IMAGE}"
+    container_name: app_blue
+    restart: unless-stopped
+    environment:
+      - PORT=${PORT}
+      - RELEASE_ID=${RELEASE_ID_BLUE}
+      - APP_POOL=blue
+    ports:
+      - "${BLUE_HOST_PORT}:${PORT}"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:${PORT}/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 1
+      start_period: 5s
+
+  app_green:
+    image: "${GREEN_IMAGE}"
+    container_name: app_green
+    restart: unless-stopped
+    environment:
+      - PORT=${PORT}
+      - RELEASE_ID=${RELEASE_ID_GREEN}
+      - APP_POOL=green
+    ports:
+      - "${GREEN_HOST_PORT}:${PORT}"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:${PORT}/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 1
+      start_period: 5s
+
+  nginx:
+    image: nginx:stable
+    container_name: nginx_proxy
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT}:8080"
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      - ./nginx/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      - ./nginx/upstream.conf:/etc/nginx/upstream.conf:rw
+    environment:
+      - ACTIVE_POOL=${ACTIVE_POOL}
+      - BLUE_HOST=app_blue
+      - BLUE_PORT=${PORT}
+      - GREEN_HOST=app_green
+      - GREEN_PORT=${PORT}
+    depends_on:
+      - app_blue
+      - app_green
+    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
