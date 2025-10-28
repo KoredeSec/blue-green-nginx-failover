@@ -32,8 +32,8 @@ upstream backend_pool {
 }
 EOF
 
-# Render nginx.conf using envsubst
-envsubst < "${TEMPLATE}" > "${OUT}"
+# Copy nginx.conf (no substitution needed)
+cp "${TEMPLATE}" "${OUT}"
 
 # Start nginx
 nginx -g 'daemon off;'
