@@ -1,15 +1,15 @@
 # Blue/Green Deployment with Nginx Auto-Failover
 
-Zero-downtime deployment architecture with automatic failover and dynamic upstream configuration.
+A fully containerized **Blue-Green deployment and failover system** built with **Docker Compose**, **Nginx**, and a **Python-based log watcher**.It enables **seamless zero-downtime switching** between two application pools (`blue` and `green`), monitors request-level metrics, and sends **real-time alerts** when error thresholds are exceeded.
 
 ## 🎯 Overview
 
-This project implements a production-grade blue/green deployment pattern where:
-- **Blue** (primary) handles all traffic normally
-- **Green** (backup) automatically takes over when Blue fails
-- **Zero client-facing errors** during failover
-- **Dynamic upstream switching** via ACTIVE_POOL configuration
-
+This project demonstrates a **production-style Blue-Green deployment** where:
+- **Nginx** acts as a reverse proxy that routes requests to either the blue or green pool.
+- **Application containers** (`app_blue` and `app_green`) run identical apps but represent different release versions.
+- **Log Watcher** continuously tails Nginx logs, calculates error rates, and sends alerts via Slack when thresholds are breached.
+- **Health checks** automatically ensure containers are ready before Nginx starts routing traffic.
+- **Manual failover** can be triggered via environment variable (`ACTIVE_POOL`) updates.
 ## 🏗️ Architecture
 
 ```
@@ -32,16 +32,24 @@ Nginx (Port 8080) ← Dynamic upstream configuration
 ## 📦 Project Structure
 
 ```
-.
-├── docker-compose.yml           # Service orchestration
-├── .env.example                 # Configuration template
-├── .env                         # Actual config (not in git)
-├── check_failover.sh            # Automated failover test
+
+blue-green-nginx-failover/
+│
+├── .env.example # Environment variable template
+├── docker-compose.yml # Multi-service configuration
+│
 ├── nginx/
-│   ├── nginx.conf.template      # Nginx base configuration
-│   ├── upstream.conf            # Generated upstream config
-│   └── docker-entrypoint.sh     # Dynamic config generator
-├── README.md                    # This file
+│ ├── nginx.conf.template # Base config with upstream logic
+│ ├── upstream.conf # Dynamic upstream pools (blue/green)
+│ └── docker-entrypoint.sh # Template rendering + startup logic
+│
+├── watcher/
+│ ├── watcher.py # Python alert engine
+│ ├── Dockerfile # Lightweight Python 3.12 base image
+│ └── requirements.txt # Dependencies (requests, python-dotenv)
+│
+├── runbook.md # Operational procedures (manual failover, recovery)
+└── README.md # Documentation (this file)
 └── DECISION.md                  # Implementation decisions
 ```
 
