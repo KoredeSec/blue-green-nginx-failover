@@ -84,13 +84,6 @@ docker-compose up -d
 docker-compose ps
 ```
 
-**Expected output:**
-```
-NAME          STATUS         PORTS
-nginx_proxy   Up             0.0.0.0:8080->80/tcp
-app_blue      Up (healthy)   0.0.0.0:8081->3000/tcp
-app_green     Up (healthy)   0.0.0.0:8082->3000/tcp
-```
 
 ---
 
@@ -165,6 +158,37 @@ Run the included test script:
 
 ---
 
+### Docker Compose Setup
+
+```bash
+# Build and start
+docker compose build
+docker compose up -d
+
+# Check all 4 containers running
+docker compose ps
+
+# Should see:
+# - nginx_proxy
+# - app_blue  
+# - app_green
+# - alert_watcher
+
+# Test 1: Verify watcher is running
+docker compose logs alert_watcher
+# Should show: "Log watcher started"
+
+# Test 2: Trigger failover alert
+curl -X POST http://localhost:8081/chaos/start?mode=error
+for i in {1..10}; do curl http://localhost:8080/version; sleep 0.5; done
+
+# CHECK SLACK - You should see alert!
+
+# Test 3: Stop chaos
+curl -X POST http://localhost:8081/chaos/stop
+```
+* Screenshots are saved in 👉 [Here](./screenshots)
+---
 ## ⚙️ Configuration
 
 ### Environment Variables
